@@ -25,7 +25,7 @@ def scraper():
     
     # Update the Mongo database using update and upsert=True
     mongo.db.collection.update({}, mars, upsert=True)
-    mongo.db.collection.update({}, mars_title_and_images, upsert=True)
+    # mongo.db.collection.update({}, mars_title_and_images, upsert=True)
     # Redirect back to home page
     return redirect('/', code=302)
 
