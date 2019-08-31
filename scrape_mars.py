@@ -17,10 +17,16 @@ import time
 #master function
 def scrape_info():
     executable_path = {'executable_path': 'chromedriver.exe'}
-    browser = Browser('chrome', **executable_path, headless=False)
+    browser = Browser('chrome', **executable_path, headless=True)
+    news_title, news_paragraph=mars_title_p(browser)
     mars_data= {
-        "mars_titles": mars_title_p(browser),
+        # "mars_titles": mars_title_p(browser),
+        "news_title": news_title,
+        "news_paragraph": news_paragraph,
         "mars_image": mars_image(browser),
+        "mars_table": mars_table(),
+        "mars_hemi_images": mars_hemis(browser)
+
     }
     return mars_data
 
@@ -34,10 +40,12 @@ def mars_title_p(browser):
     time.sleep(1)
     html = browser.html
     soup = bs(html, "html.parser")
-    mars = {}
-    mars['news_title'] = soup.find('div', class_='content_title').get_text().strip()
-    mars['news_p']= soup.find("div", class_="article_teaser_body").get_text().strip()
-    return mars
+    news_title = soup.find('div', class_='content_title').get_text().strip()
+    news_p= soup.find("div", class_="article_teaser_body").get_text().strip()
+    # mars = {}
+    # mars['news_title'] = soup.find('div', class_='content_title').get_text().strip()
+    # mars['news_p']= soup.find("div", class_="article_teaser_body").get_text().strip()
+    return news_title, news_p
 
 
 
@@ -52,15 +60,10 @@ def mars_image(browser):
     browser.click_link_by_partial_text('more info')
     html = browser.html
     soup = bs(html, "html.parser")
-
-
 # In[22]:
-
-
 # Make sure to find the image url to the full size `.jpg` image.
 # Make sure to save a complete url string for this image.
     image_path = soup.find('img', class_='main_image').get('src')
-    
     # featured_image_url
     return 'https://www.jpl.nasa.gov' + image_path
 # image_path
@@ -72,41 +75,20 @@ def mars_image(browser):
 # Visit the Mars Facts webpage [here](https://space-facts.com/mars/) and use Pandas to scrape the table containing facts 
 # about the planet including Diameter, Mass, etc.
 
-# def mars_table(browser):
-# url3 = 'https://space-facts.com/mars/'
-# browser.visit(url3)
-# html = browser.html
-# soup = bs(html, "html.parser")
-
-# tables = pd.read_html(url3)
-# tables
-
-
-# In[9]:
-
-
-# df=tables[1]
-# df.head()
-
-
-# In[10]:
-
-
-# renamed_df = df.rename(columns={
-#     0: "Description",
-#     1: "Value"
-# })
-# renamed_df.head()
-
-
-# In[11]:
-
-
-# Use Pandas to convert the data to a HTML table string.
-# renamed_df.to_html('mars_facts.html')
-
-
-# In[28]:
+def mars_table():
+    url3 = 'https://space-facts.com/mars/'
+    # browser.visit(url3)
+    # html = browser.html
+    # soup = bs(html, "html.parser")
+    tables = pd.read_html(url3)
+    df=tables[1]
+    # df.head()
+    renamed_df = df.rename(columns={
+        0: "Description",
+        1: "Value"
+    })
+    print (tables)
+    return renamed_df.to_html('mars_facts.html')
 
 
 # Visit the USGS Astrogeology site to obtain high resolution images for each of Mar's hemispheres.
@@ -115,38 +97,34 @@ def mars_image(browser):
 # hemisphere name. Use a Python dictionary to store the data using the keys `img_url` and `title`.
 # In[41]:
 
+def mars_hemis(browser):
+    url4='https://astrogeology.usgs.gov/search/results?q=hemisphere+enhanced&k1=target&v1=Mars' 
+    browser.visit(url4)
 
-# url4='https://astrogeology.usgs.gov/search/results?q=hemisphere+enhanced&k1=target&v1=Mars' 
-# browser.visit(url4)
+    hemisphere_image_urls =[]
 
-# hemisphere_image_urls =[]
+    for i in range(4):
+        mars_title_and_images={}  
 
-# for i in range(4):
-#     mars_title_and_images={}  
+        html = browser.html
+        soup = bs(html, "html.parser")
 
-#     html = browser.html
-#     soup = bs(html, "html.parser")
+        titles = soup.find_all('h3')
+        mars_title_and_images['title']= titles[i].get_text().strip()
 
-#     titles = soup.find_all('h3')
-#     mars_title_and_images['title']= titles[i].get_text().strip()
+        image= browser.find_by_tag('h3')[i]
+        image.click()
 
-#     image= browser.find_by_tag('h3')[i]
-#     image.click()
+        html = browser.html
+        soup = bs(html, "html.parser")
 
-#     html = browser.html
-#     soup = bs(html, "html.parser")
-
-#     mars_title_and_images['image_url']= soup.find('li').find('a')['href']
-
-
-#     hemisphere_image_urls.append(mars_title_and_images)
-#     browser.back()
-    
-# hemisphere_image_urls 
+        mars_title_and_images['image_url']= soup.find('li').find('a')['href']
 
 
-
-
+        hemisphere_image_urls.append(mars_title_and_images)
+        browser.back()
+        
+    return hemisphere_image_urls 
 
 # browser.quit()
 
@@ -156,3 +134,4 @@ def mars_image(browser):
 
 # get_ipython().system('jupyter nbconvert --to script scrape_mars.ipynb')
 
+# if __name__ == "__main__":
